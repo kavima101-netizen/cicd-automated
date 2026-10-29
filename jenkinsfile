@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'mywebsite'
+        CONTAINER_NAME = 'mywebsite'
+        APP_SERVER = 'YOUR_APPLICATION_SERVER_PUBLIC_IP'
+        APP_USER = 'ubuntu'
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    url: 'YOUR_GITHUB_REPOSITORY_URL'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t mywebsite:latest .'
+            }
+        }
+
+        stage('Transfer Image') {
+            steps {
+                sh '''
+                    docker save mywebsite:latest | gzip > mywebsite.tar.gz
+
+                    scp mywebsite.tar.gz \
+                    ${APP_USER}@${APP_SERVER}:/tmp/mywebsite.tar.gz
+                '''
+            }
+        }
+
+        stage('Deploy to Application Server') {
+            steps {
+                sh '''
+                    ssh ${APP_USER}@${APP_SERVER} \
+                    "gunzip -c /tmp/mywebsite.tar.gz | sudo docker load"
+                '''
+
+                sh '''
+                    ssh ${APP_USER}@${APP_SERVER} \
+                    "sudo docker rm -f mywebsite || true"
+                '''
+
+                sh '''
+                    ssh ${APP_USER}@${APP_SERVER} \
+                    "sudo docker run -d \
+                    --name mywebsite \
+                    --restart unless-stopped \
+                    -p 80:80 \
+                    mywebsite:latest"
+                '''
+            }
+        }
+    }
+}
