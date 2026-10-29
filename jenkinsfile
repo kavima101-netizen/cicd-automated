@@ -4,8 +4,8 @@ pipeline {
     environment {
         IMAGE_NAME = 'mywebsite'
         CONTAINER_NAME = 'mywebsite'
-        APP_SERVER = 'YOUR_APPLICATION_SERVER_PUBLIC_IP'
-        APP_USER = 'ubuntu'
+        APP_SERVER = '56.228.9.108'
+        APP_USER = 'ec2-user'
     }
 
     stages {
@@ -13,7 +13,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                    url: 'YOUR_GITHUB_REPOSITORY_URL'
+                    url: 'https://github.com/kavima101-netizen/cicd-automated.git'
             }
         }
 
